@@ -56,6 +56,8 @@ constexpr VkResolveModeFlagBits GetResolveOp(ResolveOp resolveOp) {
 
 // TODO: just use GENERAL everywhere if "VK_KHR_unified_image_layouts" is supported! but D3D12 is the limiter here...
 // https://docs.vulkan.org/refpages/latest/refpages/source/VK_KHR_unified_image_layouts.html
+// Synchronization2 READ_ONLY_OPTIMAL resolves by aspect: sampled color and read-only depth/stencil attachments can share sampled views.
+// Keep SHADER_RESOURCE and the sampled entries in g_ImageViewLayout consistent.
 constexpr std::array<VkImageLayout, (size_t)Layout::MAX_NUM> g_ImageLayouts = {
     VK_IMAGE_LAYOUT_UNDEFINED,                                    // UNDEFINED
     VK_IMAGE_LAYOUT_GENERAL,                                      // GENERAL
@@ -67,7 +69,7 @@ constexpr std::array<VkImageLayout, (size_t)Layout::MAX_NUM> g_ImageLayouts = {
     VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,              // DEPTH_STENCIL_READONLY
     VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR, // SHADING_RATE_ATTACHMENT
     VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ,                         // INPUT_ATTACHMENT
-    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,                     // SHADER_RESOURCE
+    VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,                            // SHADER_RESOURCE
     VK_IMAGE_LAYOUT_GENERAL,                                      // SHADER_RESOURCE_STORAGE
     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,                         // COPY_SOURCE
     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,                         // COPY_DESTINATION
@@ -304,10 +306,10 @@ constexpr VkImageUsageFlags GetImageViewUsage(TextureView type) {
 }
 
 constexpr std::array<VkImageLayout, (size_t)TextureView::MAX_NUM> g_ImageViewLayout = {
-    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,                     // TEXTURE
-    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,                     // TEXTURE_ARRAY
-    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,                     // TEXTURE_CUBE
-    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,                     // TEXTURE_CUBE_ARRAY
+    VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,                            // TEXTURE
+    VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,                            // TEXTURE_ARRAY
+    VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,                            // TEXTURE_CUBE
+    VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,                            // TEXTURE_CUBE_ARRAY
     VK_IMAGE_LAYOUT_GENERAL,                                      // STORAGE_TEXTURE
     VK_IMAGE_LAYOUT_GENERAL,                                      // STORAGE_TEXTURE_ARRAY
     VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ,                         // SUBPASS_INPUT
