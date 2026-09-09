@@ -667,8 +667,6 @@ NRI_INLINE void CommandBufferVal::BeginRendering(const RenderingDesc& renderingD
     m_RenderTargetNum = renderingDesc.colorNum;
     m_IsRenderPass = true;
 
-    ValidateReadonlyDepthStencil();
-
     GetCoreInterfaceImpl().CmdBeginRendering(*GetImpl(), attachmentsDescImpl);
 }
 
@@ -724,8 +722,6 @@ NRI_INLINE void CommandBufferVal::SetPipeline(const Pipeline& pipeline) {
     Pipeline* pipelineImpl = NRI_GET_IMPL(Pipeline, &pipeline);
 
     m_Pipeline = (PipelineVal*)&pipeline;
-
-    ValidateReadonlyDepthStencil();
 
     GetCoreInterfaceImpl().CmdSetPipeline(*GetImpl(), *pipelineImpl);
 }
@@ -812,12 +808,16 @@ NRI_INLINE void CommandBufferVal::Draw(const DrawDesc& drawDesc) {
     NRI_RETURN_ON_FAILURE(&m_Device, m_IsRecordingStarted, ReturnVoid(), "the command buffer must be in the recording state");
     NRI_RETURN_ON_FAILURE(&m_Device, m_IsRenderPass, ReturnVoid(), "must be called inside 'CmdBeginRendering/CmdEndRendering'");
 
+    ValidateReadonlyDepthStencil();
+
     GetCoreInterfaceImpl().CmdDraw(*GetImpl(), drawDesc);
 }
 
 NRI_INLINE void CommandBufferVal::DrawIndexed(const DrawIndexedDesc& drawIndexedDesc) {
     NRI_RETURN_ON_FAILURE(&m_Device, m_IsRecordingStarted, ReturnVoid(), "the command buffer must be in the recording state");
     NRI_RETURN_ON_FAILURE(&m_Device, m_IsRenderPass, ReturnVoid(), "must be called inside 'CmdBeginRendering/CmdEndRendering'");
+
+    ValidateReadonlyDepthStencil();
 
     GetCoreInterfaceImpl().CmdDrawIndexed(*GetImpl(), drawIndexedDesc);
 }
@@ -839,6 +839,8 @@ NRI_INLINE void CommandBufferVal::DrawIndirect(const Buffer& buffer, uint64_t of
     Buffer* bufferImpl = NRI_GET_IMPL(Buffer, &buffer);
     Buffer* countBufferImpl = NRI_GET_IMPL(Buffer, countBuffer);
 
+    ValidateReadonlyDepthStencil();
+
     GetCoreInterfaceImpl().CmdDrawIndirect(*GetImpl(), *bufferImpl, offset, drawNum, stride, countBufferImpl, countBufferOffset);
 }
 
@@ -858,6 +860,8 @@ NRI_INLINE void CommandBufferVal::DrawIndexedIndirect(const Buffer& buffer, uint
 
     Buffer* bufferImpl = NRI_GET_IMPL(Buffer, &buffer);
     Buffer* countBufferImpl = NRI_GET_IMPL(Buffer, countBuffer);
+
+    ValidateReadonlyDepthStencil();
 
     GetCoreInterfaceImpl().CmdDrawIndexedIndirect(*GetImpl(), *bufferImpl, offset, drawNum, stride, countBufferImpl, countBufferOffset);
 }
@@ -1307,6 +1311,8 @@ NRI_INLINE void CommandBufferVal::DrawMeshTasks(const DrawMeshTasksDesc& drawMes
     NRI_RETURN_ON_FAILURE(&m_Device, m_IsRenderPass, ReturnVoid(), "must be called inside 'CmdBeginRendering/CmdEndRendering'");
     NRI_RETURN_ON_FAILURE(&m_Device, deviceDesc.features.meshShader, ReturnVoid(), "'features.meshShader' is false");
 
+    ValidateReadonlyDepthStencil();
+
     GetMeshShaderInterfaceImpl().CmdDrawMeshTasks(*GetImpl(), drawMeshTasksDesc);
 }
 
@@ -1322,6 +1328,8 @@ NRI_INLINE void CommandBufferVal::DrawMeshTasksIndirect(const Buffer& buffer, ui
 
     Buffer* bufferImpl = NRI_GET_IMPL(Buffer, &buffer);
     Buffer* countBufferImpl = NRI_GET_IMPL(Buffer, countBuffer);
+
+    ValidateReadonlyDepthStencil();
 
     GetMeshShaderInterfaceImpl().CmdDrawMeshTasksIndirect(*GetImpl(), *bufferImpl, offset, drawNum, stride, countBufferImpl, countBufferOffset);
 }
@@ -1662,6 +1670,7 @@ NRI_INLINE void CommandBufferVal::ResolveVideoEncodeFeedback(VideoSession& video
 }
 
 NRI_INLINE void CommandBufferVal::ValidateReadonlyDepthStencil() {
+    // Validate at draw time: a new rendering scope can temporarily inherit an incompatible pipeline from the previous scope.
     if (m_Pipeline && m_DepthStencil) {
         if (m_DepthStencil->IsDepthReadonly() && m_Pipeline->WritesToDepth())
             NRI_REPORT_WARNING(&m_Device, "Depth is read-only, but the pipeline writes to depth. Writing happens only in VK!");
